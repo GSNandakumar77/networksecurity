@@ -12,14 +12,14 @@ class NetworkSecurityException(Exception):
     def __init__(self,error_message,error_details:sys):
         super().__init__(error_message)
         self.error_message =error_message
-        _,_,exc_tb=error_details.exc_info()
+        _,_,self.exc_tb=error_details.exc_info()
 
-        self.lineno=exc_tb.tb_lineno
-        self.filename=exc_tb.tb_frame.f_code.co_filename
+        self.lineno=self.exc_tb.tb_lineno
+        self.filename=self.exc_tb.tb_frame.f_code.co_filename
 
 
     def __str__(self):
-        return f"Error occurred in script: {self.filename} at line: {self.lineno} — Error: {self.error_message}"
+        return f"Error occurred in script [{0}] at line number [{1}] with message [{2}]".format(self.filename,self.exc_tb.tb_lineno,str(self.error_message))
     
 
 
