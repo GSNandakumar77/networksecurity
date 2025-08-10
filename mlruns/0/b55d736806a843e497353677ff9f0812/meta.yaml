@@ -1,0 +1,14 @@
+artifact_uri: file:///E:/Projects/Networksecurity/mlruns/0/b55d736806a843e497353677ff9f0812/artifacts
+end_time: 1754836385568
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b55d736806a843e497353677ff9f0812
+run_name: resilient-skunk-90
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754836385253
+status: 4
+tags: []
+user_id: ADMIN

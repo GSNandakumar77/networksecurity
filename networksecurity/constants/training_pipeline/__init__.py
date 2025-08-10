@@ -16,6 +16,9 @@ TEST_FILE_NAME:str="test.csv"
 SCHEMA_FILE_PATH=os.path.join("data_schema","schema.yaml")
 
 
+SAVED_MODEL_DIR=os.path.join("saved_models")
+MODEL_FILE_NAME="model.pkl"
+
 '''
 Data ingestion related constant start with DATA_INGESTION VAR NAME 
 
@@ -37,11 +40,10 @@ DATA_VALIDATION_INVALID_DIR:str="invalid"
 DATA_VALIDATION_DRIFT_REPORT_DIR:str="drift_report"
 DATA_VALIDATION_DRIFT_REPORT_FILE_NAME:str="report.yaml"
 
-
-
 '''
 data tranformation related constant start with DATA_TRANSFORMATION VAR NAME 
 '''
+
 DATA_TRANSFORMATION_DIR_NAME:str="data_transformation"
 DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR:str="transformed"
 DATA_TRANSFORMATION_TRANFORMED_OBJECT_DIR:str="transfromed_object"
@@ -51,4 +53,15 @@ DATA_TRANSFORMATION_IMPUTER_PARAMS:dict={
     "n_neighbors":3,
     "weights":"uniform"
 }
+
 PREPROCESSING_OBJECT_FILE_NAME="preprocessing.pkl"
+
+'''
+model Trainer related constant start with Model_trainer VAR NAME 
+'''
+
+MODEL_TRAINER_DIR_NAME:str="model_trainer"
+MODEL_TRAINER_TRAINED_MODEL_DIR:str="trained_model"
+MODEL_TRAINER_TRAINED_MODEL_NAME:str="model.pkl"
+MODEL_TRAINER_EXPECTED_SCORE:float=0.6
+MODEL_TRAINER_OVER_FITTING_UNDER_FITTING_THRESHOLD:float=0.05

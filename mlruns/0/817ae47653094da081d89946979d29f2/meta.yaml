@@ -1,0 +1,14 @@
+artifact_uri: file:///E:/Projects/Networksecurity/mlruns/0/817ae47653094da081d89946979d29f2/artifacts
+end_time: 1754836764563
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 817ae47653094da081d89946979d29f2
+run_name: rogue-duck-288
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754836756609
+status: 3
+tags: []
+user_id: ADMIN

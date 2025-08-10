@@ -1,0 +1,14 @@
+artifact_uri: file:///E:/Projects/Networksecurity/mlruns/0/81de90ad20c84470b67adab69f024a40/artifacts
+end_time: 1754837182643
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 81de90ad20c84470b67adab69f024a40
+run_name: traveling-foal-330
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754837173823
+status: 3
+tags: []
+user_id: ADMIN
