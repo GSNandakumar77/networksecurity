@@ -21,6 +21,10 @@ from sklearn.ensemble import (
     AdaBoostClassifier,RandomForestClassifier,GradientBoostingClassifier
 )
 
+import dagshub
+dagshub.init(repo_owner='GSNandakumar77', repo_name='networksecurity', mlflow=True)
+
+
 class ModelTrainer:
     def __init__(self,model_trainer_config:ModelTrainerConfig,data_transformation_artifact:DataTransformationArtifact):
         try:
@@ -29,16 +33,22 @@ class ModelTrainer:
         except Exception as e:
             raise NetworkSecurityException(e,sys)
         
-    def track_mlflow(self,best_model,classification_metric):
-        with mlflow.start_run():
-            f1_score=classification_metric.f1_score
-            precision_score=classification_metric.precision_score
-            recall_score=classification_metric.recall_score
+    def track_mlflow(self, best_model, classification_metric, log_model_flag=False):
+        with mlflow.start_run(nested=True):
+            mlflow.log_metric("f1_Score", classification_metric.f1_score)
+            mlflow.log_metric("precision_score", classification_metric.precision_score)
+            mlflow.log_metric("recall_score", classification_metric.recall_score)
 
-            mlflow.log_metric("f1_Score",f1_score)
-            mlflow.log_metric("precision_score",precision_score)
-            mlflow.log_metric("recall_score",recall_score)
-            mlflow.sklearn.log_model(best_model,"model")
+            if log_model_flag:  # save only if True
+                model_path = "best_model"
+                if os.path.exists(model_path):
+                    import shutil
+                    shutil.rmtree(model_path)
+                mlflow.sklearn.save_model(best_model, model_path)
+                mlflow.log_artifacts(model_path, artifact_path="model")
+
+
+
 
     def train_model(self,X_train,Y_train,X_test,Y_test):
         models={
@@ -99,8 +109,11 @@ class ModelTrainer:
 
 
 
+
         Y_test_pred=best_model.predict(X_test)
         classification_test_metric=get_classification_score(Y_true=Y_test,Y_pred=Y_test_pred)
+
+
 
         self.track_mlflow(best_model,classification_test_metric)
 
@@ -113,8 +126,8 @@ class ModelTrainer:
 
         Network_Model=NetworkModel(preprocessor=preprocessor,model=best_model)
         save_object(file_path=self.model_trainer_config.trained_model_file_path,obj=Network_Model)
-
-
+        ## save the model_object in seperate folder 
+        save_object("final_models/model.pkl",best_model)
         ##model trainer artifacts 
 
         model_trainer_artifact=ModelTrainerArtifact(trained_model_file_path=self.model_trainer_config.trained_model_file_path,
