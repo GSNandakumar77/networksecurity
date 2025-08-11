@@ -29,6 +29,8 @@ jobs:
     name: Continuous Delivery - Build & Push
     needs: integration
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build-image.outputs.image }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -50,6 +52,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag, and push image to Amazon ECR
+        id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
@@ -85,7 +88,7 @@ jobs:
 
       - name: Pull latest image
         run: |
-          docker pull ${{ secrets.AWS_ECR_LOGIN_URL }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          docker pull ${{ needs.build-and-push-ecr-image.outputs.image }}
 
       - name: Run Docker Image
         run: |
@@ -97,7 +100,7 @@ jobs:
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION=${{ secrets.AWS_REGION }} \
             -e MONGODB_URL_KEY=${{ secrets.MONGODB_URL_KEY }} \
-            ${{ secrets.AWS_ECR_LOGIN_URL }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+            ${{ needs.build-and-push-ecr-image.outputs.image }}
 
       - name: Verify app is running
         run: |
