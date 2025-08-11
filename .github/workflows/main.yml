@@ -29,8 +29,6 @@ jobs:
     name: Continuous Delivery - Build & Push
     needs: integration
     runs-on: ubuntu-latest
-    outputs:
-      image: ${{ steps.build_image.outputs.image }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -52,15 +50,16 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag, and push image to Amazon ECR
-        id: build_image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "Building image: $IMAGE_URI"
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
   deploy:
     name: Continuous Deployment
@@ -87,10 +86,15 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Pull latest image
+        env:
+          IMAGE_URI: ${{ secrets.AWS_ECR_LOGIN_URL }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
         run: |
-          docker pull ${{ needs.build-and-push-ecr-image.outputs.image }}
+          echo "Pulling image: $IMAGE_URI"
+          docker pull $IMAGE_URI
 
       - name: Run Docker Image
+        env:
+          IMAGE_URI: ${{ secrets.AWS_ECR_LOGIN_URL }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
         run: |
           docker run -d \
             -p 8080:8080 \
@@ -100,7 +104,7 @@ jobs:
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION=${{ secrets.AWS_REGION }} \
             -e MONGODB_URL_KEY=${{ secrets.MONGODB_URL_KEY }} \
-            ${{ needs.build-and-push-ecr-image.outputs.image }}
+            $IMAGE_URI
 
       - name: Verify app is running
         run: |
