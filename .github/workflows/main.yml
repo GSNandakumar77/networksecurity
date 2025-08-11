@@ -29,6 +29,8 @@ jobs:
     name: Continuous Delivery - Build & Push
     needs: integration
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.expose.outputs.image }}   # expose at job level
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -39,27 +41,38 @@ jobs:
           sudo apt-get install -y jq unzip
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image to Amazon ECR
+        id: build-image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: latest
         run: |
-          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "Building image: $IMAGE_URI"
-          docker build -t $IMAGE_URI .
-          docker push $IMAGE_URI
-          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+          set -euo pipefail
+          echo "Registry: $ECR_REGISTRY"
+          echo "Repository: $ECR_REPOSITORY"
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      # Job-level outputs must be written by a step and then mapped above
+      - name: Expose image output
+        id: expose
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: latest
+        run: |
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
   deploy:
     name: Continuous Deployment
@@ -69,32 +82,41 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Clean old Docker containers & images
-        run: |
-          docker stop networksecurity && docker rm -fv networksecurity || true
-          docker system prune -af
-          docker volume prune -f
-
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Debug image value
+        run: |
+          echo "Image from build job: ${{ needs.build-and-push-ecr-image.outputs.image }}"
+
+      - name: Clean old Docker containers & images
+        run: |
+          docker stop networksecurity && docker rm -fv networksecurity || true
+          docker system prune -af
+          docker volume prune -f
 
       - name: Pull latest image
         env:
-          IMAGE_URI: ${{ secrets.AWS_ECR_LOGIN_URL }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          IMAGE: ${{ needs.build-and-push-ecr-image.outputs.image }}
         run: |
-          echo "Pulling image: $IMAGE_URI"
-          docker pull $IMAGE_URI
+          set -euo pipefail
+          if [ -z "${IMAGE:-}" ]; then
+            echo "ERROR: IMAGE is empty; check previous job outputs" >&2
+            exit 1
+          fi
+          docker pull "$IMAGE"
 
       - name: Run Docker Image
         env:
-          IMAGE_URI: ${{ secrets.AWS_ECR_LOGIN_URL }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          IMAGE: ${{ needs.build-and-push-ecr-image.outputs.image }}
         run: |
           docker run -d \
             -p 8080:8080 \
@@ -104,7 +126,7 @@ jobs:
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION=${{ secrets.AWS_REGION }} \
             -e MONGODB_URL_KEY=${{ secrets.MONGODB_URL_KEY }} \
-            $IMAGE_URI
+            "$IMAGE"
 
       - name: Verify app is running
         run: |
