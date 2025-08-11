@@ -1,0 +1,19 @@
+import os
+import dagshub
+
+# Other imports...
+from networksecurity.components.model_trainer import ModelTrainer
+
+# The rest of your code...
+
+# Check if the DAGSHUB_TOKEN environment variable exists.
+if 'DAGSHUB_TOKEN' in os.environ:
+    # If the token is available, configure MLflow to use it.
+    os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/GSNandakumar77/networksecurity.mlflow'
+    os.environ['MLFLOW_TRACKING_USERNAME'] = 'GSNandakumar77'
+    os.environ['MLFLOW_TRACKING_PASSWORD'] = os.environ['DAGSHUB_TOKEN']
+else:
+    # Otherwise, fall back to the interactive init for local development.
+    dagshub.init(repo_owner='GSNandakumar77', repo_name='networksecurity', mlflow=True)
+
+# The rest of your code follows...

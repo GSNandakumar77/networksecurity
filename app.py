@@ -88,7 +88,9 @@ async def predict_route(request:Request,file:UploadFile=File(...)):
     except Exception as e:
         raise NetworkSecurityException(e,sys)
 
-
+import uvicorn
 
 if __name__=="__main__":
-    app_run(app,host="0.0.0.0",port=8000)## app_run indireclty runs the uvicorn app:app --reload
+    #app_run(app,host="0.0.0.0",port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
+## app_run indireclty runs the uvicorn app:app --reload
