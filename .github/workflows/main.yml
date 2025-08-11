@@ -20,10 +20,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Lint code
-        run: echo "Linting repository" # replace with actual lint command e.g. flake8 .
+        run: echo "Linting repository" # replace with flake8 or pylint
 
       - name: Run unit tests
-        run: echo "Running unit tests" # replace with pytest or unittest command
+        run: echo "Running unit tests" # replace with pytest or unittest
 
   build-and-push-ecr-image:
     name: Continuous Delivery - Build & Push
@@ -96,6 +96,7 @@ jobs:
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION=${{ secrets.AWS_REGION }} \
+            -e MONGODB_URL_KEY=${{ secrets.MONGODB_URL_KEY }} \
             ${{ secrets.AWS_ECR_LOGIN_URL }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
       - name: Verify app is running
