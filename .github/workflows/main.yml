@@ -30,7 +30,7 @@ jobs:
     needs: integration
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ steps.build-image.outputs.image }}
+      image: ${{ steps.build_image.outputs.image }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -52,7 +52,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+        id: build_image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
